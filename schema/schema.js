@@ -1,5 +1,6 @@
 const graphql = require("graphql");
-const _ = require("lodash");
+// const _ = require("lodash");
+const axios = require("axios");
 const { GraphQLObjectType, GraphQLString, GraphQLInt, GraphQLSchema } = graphql;
 
 const users = [
@@ -24,9 +25,16 @@ const RootQuery = new GraphQLObjectType({
     user: {
       type: UserType,
       args: { id: { type: GraphQLString } },
-      // resolve reaches out and grabs real data
+      // resolve reaches out and grabs real data => async promise
       resolve(parentValue, args) {
-        return _.find(users, { id: args.id });
+        // return _.find(users, { id: args.id });
+        return (
+          axios
+            .get(`http://localhost:3000/users/${args.id}`)
+            // axios nests response in data key which doesn't play nice with graphql
+            // unnesting below
+            .then((response) => response.data)
+        );
       },
     },
   },
