@@ -7,6 +7,7 @@ const {
   GraphQLInt,
   GraphQLList,
   GraphQLSchema,
+  GraphQLNonNull,
 } = graphql;
 
 // const users = [
@@ -83,4 +84,38 @@ const RootQuery = new GraphQLObjectType({
   },
 });
 
-module.exports = new GraphQLSchema({ query: RootQuery });
+// for updating db
+const mutation = new GraphQLObjectType({
+  name: "Mutation",
+  fields: {
+    // for adding user
+    addUser: {
+      type: UserType,
+      args: {
+        firstName: { type: new GraphQLNonNull(GraphQLString) },
+        lastName: { type: new GraphQLNonNull(GraphQLString) },
+        age: { type: new GraphQLNonNull(GraphQLInt) },
+        company: { type: GraphQLString },
+      },
+      resolve(parentValue, { firstName, lastName, age }) {
+        return axios
+          .post(`http://localhost:3000/users`, { firstName, lastName, age })
+          .then((response) => response.data);
+      },
+    },
+    deleteUser: {
+      // even though you get nothing back, graphql requires a type
+      type: UserType,
+      args: {
+        id: { type: new GraphQLNonNull(GraphQLString) },
+      },
+      resolve(parentValue, { id }) {
+        return axios
+          .delete(`http://localhost:3000/users/${id}`)
+          .then((response) => response.data);
+      },
+    },
+  },
+});
+
+module.exports = new GraphQLSchema({ query: RootQuery, mutation });
